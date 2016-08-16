@@ -27,7 +27,7 @@ public class ListAdapter extends BaseExpandableListAdapter {
 
     @Override
     public int getGroupCount() {
-        return 10;
+        return movies.length;
     }
 
     @Override
