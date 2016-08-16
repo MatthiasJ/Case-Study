@@ -22,6 +22,8 @@ public class MainActivity extends AppCompatActivity {
 
     // Trailing slash is needed
     public static final String BASE_URL = "https://api.trakt.tv/";
+    private ListAdapter mAdapter;
+    private  ExpandableListView mListview;
 
 
     Gson gson = new GsonBuilder()
@@ -32,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
             .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build();
+    private Movie[] movies;
 
 
     public interface TrakTvEndpointInterface {
@@ -53,11 +56,14 @@ public class MainActivity extends AppCompatActivity {
             retrofit.create(TrakTvEndpointInterface.class);
 
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
+        mListview = (ExpandableListView) findViewById(R.id.listView);
+        mAdapter = new ListAdapter(this);
 
 
         Call<Movie[]> movieCall = apiService.get10PopularMovies();
@@ -66,20 +72,21 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onResponse(Call<Movie[]> call, Response<Movie[]> response) {
-                Movie[] movies = response.body();
+                movies = response.body();
 
-                Log.d("MainActivity",movies[0].getTitle());
+                Log.d("MainActivity", movies[0].getTitle());
+                mAdapter.setMovies(movies);
+                mListview.setAdapter(mAdapter);
             }
 
             @Override
             public void onFailure(Call<Movie[]> call, Throwable t) {
-                Log.d("MainActivity","errorMessage: "+t.getMessage());
+                Log.d("MainActivity", "errorMessage: " + t.getMessage());
             }
         });
 
-        ExpandableListView mListview = (ExpandableListView) findViewById(R.id.listView);
-        ListAdapter mAdapter = new ListAdapter(this);
-        mListview.setAdapter(mAdapter);
+
+
     }
 
 

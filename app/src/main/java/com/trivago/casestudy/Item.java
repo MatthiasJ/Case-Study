@@ -5,37 +5,8 @@ package com.trivago.casestudy;
  */
 public class Item {
 
-    String title, year;
+   private String title, year;
 
 
-    class ids {
-        String trakt, slug, imdb, tmdb;
-    }
-
-    class images {
-        class fanart {
-            String full, medium, thumb;
-        }
-
-        class poster {
-            String full, medium, thumb;
-        }
-
-        class logo {
-            String full;
-        }
-
-        class clearart {
-            String full;
-        }
-
-        class banner {
-            String full;
-        }
-
-        class thumb {
-            String full;
-        }
-    }
 }
 

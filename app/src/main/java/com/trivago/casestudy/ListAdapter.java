@@ -8,6 +8,7 @@ import android.widget.BaseExpandableListAdapter;
 import android.widget.ImageView;
 
 import com.squareup.picasso.Picasso;
+import com.trivago.casestudy.models.Movie;
 
 /**
  * Created by Matthias on 15.08.16 at 17:58.
@@ -17,6 +18,7 @@ public class ListAdapter extends BaseExpandableListAdapter {
 
     private Context context;
     private LayoutInflater inflater;
+    private Movie[] movies;
 
     public ListAdapter(Context context) {
         this.context = context;
@@ -68,7 +70,7 @@ public class ListAdapter extends BaseExpandableListAdapter {
 
         ImageView imageView = (ImageView) convertView.findViewById(R.id.imageView);
 
-        Picasso.with(context).load("https://walter.trakt.us/images/movies/000/000/120/posters/thumb/8369bf0d4a.jpg").into(imageView);
+        Picasso.with(context).load(movies[groupPosition].getImages().getThumb().getFull()).into(imageView);
 
         return convertView;
     }
@@ -81,5 +83,9 @@ public class ListAdapter extends BaseExpandableListAdapter {
     @Override
     public boolean isChildSelectable(int groupPosition, int childPosition) {
         return false;
+    }
+
+    public void setMovies(Movie[] movies) {
+        this.movies = movies;
     }
 }
