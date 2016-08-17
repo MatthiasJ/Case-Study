@@ -74,7 +74,7 @@ public class ListAdapter extends BaseExpandableListAdapter {
 
         ImageView imageView = (ImageView) convertView.findViewById(R.id.imageView);
 
-        Picasso.with(context).load(movies.get(groupPosition).getImages().getThumb().getFull()).placeholder(R.drawable.placeholder).into(imageView);
+        Picasso.with(context).load(movies.get(groupPosition).getImages().getFanart().getThumb()).placeholder(R.drawable.placeholder).into(imageView);
 
         return convertView;
     }
