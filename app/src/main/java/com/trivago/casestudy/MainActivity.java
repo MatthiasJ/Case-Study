@@ -9,19 +9,21 @@ import android.widget.ExpandableListView;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.jakewharton.rxbinding.widget.RxTextView;
 import com.trivago.casestudy.models.Movie;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
+import java.util.List;
+
 import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.GET;
 import retrofit2.http.Headers;
 import retrofit2.http.Query;
+import rx.Observable;
+import rx.Subscriber;
 import rx.Subscription;
-import rx.functions.Action1;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -35,10 +37,14 @@ public class MainActivity extends AppCompatActivity {
     private ListAdapter mAdapter;
     private ExpandableListView mListview;
     private int scrollCounter = 1;
-    private Movie[] movies;
 
+    private Subscription movieCallSubscription;
+    private Observable<List<Movie>> movieCall;
 
     private EditText editText;
+
+
+    RxJavaCallAdapterFactory rxAdapter = RxJavaCallAdapterFactory.createWithScheduler(Schedulers.io());
 
     Gson gson = new GsonBuilder()
             .setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
@@ -47,8 +53,108 @@ public class MainActivity extends AppCompatActivity {
     Retrofit retrofit = new Retrofit.Builder()
             .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create(gson))
+            .addCallAdapterFactory(rxAdapter)
             .build();
 
+
+    TrakTvEndpointInterface apiService =
+            retrofit.create(TrakTvEndpointInterface.class);
+
+
+
+
+
+
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        editText = (EditText) findViewById(R.id.editText);
+
+        loadMoviesPopMovies(scrollCounter);
+
+        movieCallSubscription = movieCall.subscribe();
+
+
+        mListview = (ExpandableListView) findViewById(R.id.listView);
+        mAdapter = new ListAdapter(this);
+
+
+
+
+
+
+        mListview.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+
+                    // load moare
+                    Log.d("MainActivity","first visible item: "+firstVisibleItem);
+
+                    if (firstVisibleItem%9==0 && firstVisibleItem!=0) {
+                        //copy old movies to new array
+
+                    Log.d("MainActivity","here we are");
+                        scrollCounter++;
+                        loadMoviesPopMovies(scrollCounter);
+                    }
+
+
+            }
+        });
+
+
+
+    }
+
+
+
+    private void loadMoviesPopMovies(int position) {
+
+        String pos = Integer.toString(position);
+
+        movieCall = apiService.get10PopularMovies(IMAGES, pos, LIMIT);
+        movieCallSubscription = movieCall.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new Subscriber<List<Movie>>() {
+            @Override
+            public void onCompleted() {
+
+                Log.d("MainActivity", "completed");
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                Log.d("MainActivity", "error: " + e.getMessage());
+            }
+
+            @Override
+            public void onNext(List<Movie> movies) {
+
+                if (mListview.getAdapter() == null) {
+                    mListview.setAdapter(mAdapter);
+                }
+
+                mAdapter.getMovies().addAll(movies);
+                mAdapter.notifyDataSetChanged();
+                Log.d("MainActivity", "onNExt");
+
+            }
+        });
+
+
+    }
+
+
+    @Override
+    protected void onDestroy() {
+        this.movieCallSubscription.unsubscribe();
+        super.onDestroy();
+    }
 
     public interface TrakTvEndpointInterface {
 
@@ -58,90 +164,13 @@ public class MainActivity extends AppCompatActivity {
         @Headers({"Content-Type: application/json", "trakt-api-key: ad005b8c117cdeee58a1bdb7089ea31386cd489b21e14b19818c91511f12a086", "trakt-api-version: 2"})
 
         @GET("movies/popular?extended=images")
-        Call<Movie[]> get10PopularMovies(@Query("extended") String images, @Query("page") String page, @Query("limit") String limit);
+        Observable<List<Movie>> get10PopularMovies(@Query("extended") String images, @Query("page") String page, @Query("limit") String limit);
+
+
+        //TODO change parameters
+        @GET("movies/popular?extended=images")
+        Observable<List<Movie>> getSpecificMovies(@Query("extended") String images, @Query("page") String page, @Query("limit") String limit);
 
 
     }
-
-    TrakTvEndpointInterface apiService =
-            retrofit.create(TrakTvEndpointInterface.class);
-
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        editText = (EditText) findViewById(R.id.editText);
-
-        mListview = (ExpandableListView) findViewById(R.id.listView);
-        mAdapter = new ListAdapter(this);
-
-        mListview.setOnScrollListener(new AbsListView.OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(AbsListView view, int scrollState) {
-
-            }
-
-            @Override
-            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-                if (firstVisibleItem % 10 == 0) {
-
-                    // load moare
-
-                    if (movies != null) {
-                        //copy old movies to new array
-
-                        loadMovies(scrollCounter + 1);
-                    }
-
-                }
-            }
-        });
-
-        loadMovies(scrollCounter);
-
-        Subscription editTextSub = RxTextView.textChanges(editText).subscribe(new Action1<String>() {
-            @Override
-            public void call(String value) {
-                // do some work with new text
-            }
-        });
-
-
-
-// make sure to unsubscribe the subscription.
-
-
-    }
-
-
-
-
-    private void loadMovies(int position) {
-
-        String pos = Integer.toString(position);
-
-        Call<Movie[]> movieCall = apiService.get10PopularMovies(IMAGES, pos, LIMIT);
-        movieCall.enqueue(new Callback<Movie[]>() {
-
-
-            @Override
-            public void onResponse(Call<Movie[]> call, Response<Movie[]> response) {
-                movies = response.body();
-                mAdapter.setMovies(movies);
-
-                if (mListview.getAdapter() == null) {
-                    mListview.setAdapter(mAdapter);
-
-                }
-            }
-
-            @Override
-            public void onFailure(Call<Movie[]> call, Throwable t) {
-                Log.d("MainActivity", "errorMessage: " + t.getMessage());
-            }
-        });
-    }
-
-
 }

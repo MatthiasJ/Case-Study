@@ -10,6 +10,9 @@ import android.widget.ImageView;
 import com.squareup.picasso.Picasso;
 import com.trivago.casestudy.models.Movie;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by Matthias on 15.08.16 at 17:58.
  */
@@ -18,16 +21,17 @@ public class ListAdapter extends BaseExpandableListAdapter {
 
     private Context context;
     private LayoutInflater inflater;
-    private Movie[] movies;
+    private List<Movie> movies;
 
     public ListAdapter(Context context) {
         this.context = context;
+        movies = new ArrayList<>();
         inflater = LayoutInflater.from(context);
     }
 
     @Override
     public int getGroupCount() {
-        return movies.length;
+        return movies.size();
     }
 
     @Override
@@ -70,7 +74,7 @@ public class ListAdapter extends BaseExpandableListAdapter {
 
         ImageView imageView = (ImageView) convertView.findViewById(R.id.imageView);
 
-        Picasso.with(context).load(movies[groupPosition].getImages().getThumb().getFull()).into(imageView);
+        Picasso.with(context).load(movies.get(groupPosition).getImages().getThumb().getFull()).placeholder(R.drawable.placeholder).into(imageView);
 
         return convertView;
     }
@@ -85,7 +89,11 @@ public class ListAdapter extends BaseExpandableListAdapter {
         return false;
     }
 
-    public void setMovies(Movie[] movies) {
+    public void setMovies(List<Movie> movies) {
         this.movies = movies;
+    }
+
+    public List<Movie> getMovies() {
+        return movies;
     }
 }
