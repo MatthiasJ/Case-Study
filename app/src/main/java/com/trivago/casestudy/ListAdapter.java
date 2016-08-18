@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 import com.trivago.casestudy.models.Movie;
@@ -73,6 +74,10 @@ public class ListAdapter extends BaseExpandableListAdapter {
         }
 
         ImageView imageView = (ImageView) convertView.findViewById(R.id.imageView);
+
+        TextView title = (TextView) convertView.findViewById(R.id.title);
+
+        title.setText(movies.get(groupPosition).getTitle());
 
         Picasso.with(context).load(movies.get(groupPosition).getImages().getFanart().getThumb()).placeholder(R.drawable.placeholder).into(imageView);
 

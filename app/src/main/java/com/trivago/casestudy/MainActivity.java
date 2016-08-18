@@ -40,7 +40,12 @@ public class MainActivity extends AppCompatActivity {
 
     private ListAdapter mAdapter;
     private ExpandableListView mListview;
-    private int scrollCounter = 1;
+    private int scrollCounter = 0;
+
+
+    private int mLastFirstVisibleItem;
+    private boolean mIsScrollingUp;
+
 
     private Subscription movieCallSubscription;
     private Subscription searchSubscription;
@@ -48,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
     private Observable<List<Movie>> movieCall;
     private Observable<List<SearchResult>> movieCall2;
 
-    private   List<Movie> movies;
+    private List<Movie> movies;
 
     private EditText editText;
 
@@ -84,7 +89,6 @@ public class MainActivity extends AppCompatActivity {
         mListview = (ExpandableListView) findViewById(R.id.listView);
         mAdapter = new ListAdapter(this);
 
-
         mListview.setOnScrollListener(new AbsListView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(AbsListView view, int scrollState) {
@@ -95,13 +99,34 @@ public class MainActivity extends AppCompatActivity {
 
                 // load moare
                 Log.d("MainActivity", "first visible item: " + firstVisibleItem);
+                Log.d("MainActivity", "last visible position: " + mListview.getLastVisiblePosition());
 
-                if (firstVisibleItem % 9 == 0 && firstVisibleItem != 0) {
+
+                if (view.getId() == mListview.getId()) {
+                    final int currentFirstVisibleItem = mListview.getFirstVisiblePosition();
+
+                    if (currentFirstVisibleItem > mLastFirstVisibleItem) {
+                        mIsScrollingUp = false;
+                    } else if (currentFirstVisibleItem < mLastFirstVisibleItem) {
+                        mIsScrollingUp = true;
+                    }
+
+                    mLastFirstVisibleItem = currentFirstVisibleItem;
+                }
+
+
+                //load data only when scrolling down
+                if (mListview.getLastVisiblePosition() % 9 == 0 && firstVisibleItem != 0 && !mIsScrollingUp) {
                     //copy old movies to new array
 
-                    Log.d("MainActivity", "here we are");
-                    scrollCounter++;
-                    loadMoviesPopMovies(scrollCounter);
+
+                    if (mLastFirstVisibleItem != mListview.getLastVisiblePosition()) {
+                        scrollCounter++;
+                        loadMoviesPopMovies(scrollCounter);
+                        mLastFirstVisibleItem = mListview.getLastVisiblePosition();
+                    }
+
+
                 }
 
 
@@ -131,9 +156,9 @@ public class MainActivity extends AppCompatActivity {
     private void loadSearchedMovies(int position, String squence) {
 
         String pos = Integer.toString(position);
-                         movies = new ArrayList<>();
+        movies = new ArrayList<>();
 
-        movieCall2 = apiService.getSearchedMovies(IMAGES,squence);
+        movieCall2 = apiService.getSearchedMovies(IMAGES, squence);
         movieCallSubscription = movieCall2.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new Subscriber<List<SearchResult>>() {
             @Override
             public void onCompleted() {
@@ -153,9 +178,7 @@ public class MainActivity extends AppCompatActivity {
                     mListview.setAdapter(mAdapter);
                 }
 
-                Log.d("MainActivity", "movie size: "+results.size());
-
-
+                Log.d("MainActivity", "movie size: " + results.size());
 
 
                 for (int i = 0; i < results.size(); i++) {
@@ -191,13 +214,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onNext(List<Movie> movies) {
 
+
                 if (mListview.getAdapter() == null) {
                     mListview.setAdapter(mAdapter);
                 }
 
                 mAdapter.getMovies().addAll(movies);
                 mAdapter.notifyDataSetChanged();
-                Log.d("MainActivity", "onNExt");
+                Log.d("MainActivity", "onNExt movies size " + mAdapter.getMovies().size());
 
             }
         });
@@ -215,19 +239,14 @@ public class MainActivity extends AppCompatActivity {
 
     public interface TrakTvEndpointInterface {
 
-        // Request method and URL specified in the annotation
-        // Callback for the parsed response is the last parameter
 
         @Headers({"Content-Type: application/json", "trakt-api-key: ad005b8c117cdeee58a1bdb7089ea31386cd489b21e14b19818c91511f12a086", "trakt-api-version: 2"})
 
         @GET("movies/popular")
         Observable<List<Movie>> get10PopularMovies(@Query("extended") String extendedValues, @Query("page") String page, @Query("limit") String limit);
 
-//        @GET("search/movie/?query=james&extended=images")
-//        Observable<List<SearchResult>> getSearchedMovies();
 
-//        https://api.trakt.tv/search/movie/?query=the expendables&extended=images
-@Headers({"Content-Type: application/json", "trakt-api-key: ad005b8c117cdeee58a1bdb7089ea31386cd489b21e14b19818c91511f12a086", "trakt-api-version: 2"})
+        @Headers({"Content-Type: application/json", "trakt-api-key: ad005b8c117cdeee58a1bdb7089ea31386cd489b21e14b19818c91511f12a086", "trakt-api-version: 2"})
         @GET("search/movie")
         Observable<List<SearchResult>> getSearchedMovies(
                 @Query("extended") String extendedValues,
