@@ -2,10 +2,9 @@ package com.trivago.casestudy;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
-import android.widget.AbsListView;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.widget.EditText;
-import android.widget.ExpandableListView;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -40,14 +39,14 @@ public class MainActivity extends AppCompatActivity {
 
 
     // ui stufff
-    private ListAdapter mAdapter;
-    private ExpandableListView mListview;
+    private RecycleViewAdapter mAdapter;
 
 
     // behaviour and helper fields
-    private int scrollCounter = 0;
-    private int mLastFirstVisibleItem;
-    private boolean mIsScrollingUp;
+    private int scrollCounter = 1;
+    private boolean searchMode;
+    private boolean searchedBefore;
+    private String tempSearchTerm;
 
 
     // other
@@ -75,87 +74,100 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         final EditText editText = (EditText) findViewById(R.id.editText);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
 
 
-        mListview = (ExpandableListView) findViewById(R.id.listView);
-        mAdapter = new ListAdapter(this);
-        mListview.setOnScrollListener(new AbsListView.OnScrollListener() {
+        RecyclerView mListview = (RecyclerView) findViewById(R.id.recyclerView);
+
+        mAdapter = new RecycleViewAdapter(this);
+        mListview.setLayoutManager(layoutManager);
+        mListview.setAdapter(mAdapter);
+
+
+        mListview.addOnScrollListener(new EndlessRecyclerViewScrollListener(layoutManager) {
             @Override
-            public void onScrollStateChanged(AbsListView view, int scrollState) {
-            }
-
-            @Override
-            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-
-                Log.d("MainActivity", "first visible item: " + firstVisibleItem);
-                Log.d("MainActivity", "last visible position: " + mListview.getLastVisiblePosition());
+            public void onLoadMore(int page, int totalItemsCount) {
 
 
-                // determine scroll direction
-                if (view.getId() == mListview.getId()) {
-                    final int currentFirstVisibleItem = mListview.getFirstVisiblePosition();
+                if (mAdapter != null) {
+                    scrollCounter++;
 
-                    if (currentFirstVisibleItem > mLastFirstVisibleItem) {
-                        mIsScrollingUp = false;
-                    } else if (currentFirstVisibleItem < mLastFirstVisibleItem) {
-                        mIsScrollingUp = true;
-                    }
-
-                    mLastFirstVisibleItem = currentFirstVisibleItem;
-                }
-
-
-                //load data only when scrolling downwards
-                if (mListview.getLastVisiblePosition() % 9 == 0 && firstVisibleItem != 0 && !mIsScrollingUp) {
-
-                    if (mLastFirstVisibleItem != mListview.getLastVisiblePosition()) {
-                        scrollCounter++;
-
-                        if (editText.getText().toString().equals("")) {
-                            loadMovies(scrollCounter);
-                        } else {
-                            loadMovies(scrollCounter, editText.getText().toString());
-
-                        }
-                        mLastFirstVisibleItem = mListview.getLastVisiblePosition();
+                    if (searchMode) {
+                        loadMovies(scrollCounter, tempSearchTerm);
+                    } else {
+                        loadMovies(scrollCounter);
                     }
                 }
             }
         });
 
 
+        // handle editText changes
 
-            // handle editText changes
-        editTextSub = RxTextView.textChanges(editText)
+
+//        filter(new Func1<CharSequence, Boolean>() {
+//                   @Override
+//                   public Boolean call(CharSequence charSequence) {
+//                       return charSequence.length()>2;
+//                   }
+//               }
+
+        editTextSub = RxTextView.textChanges(editText).debounce(100, TimeUnit.MILLISECONDS)
                 .observeOn(AndroidSchedulers.mainThread()).subscribe(new Action1<CharSequence>() {
+
                     @Override
                     public void call(CharSequence value) {
-                        if (value.length() > 3) {
-                            loadMovies(1, value.toString());
+
+                        if (mAdapter.movies != null) {
+                            tempSearchTerm = value.toString();
+                            if (tempSearchTerm.length() > 2) {
+
+                                searchMode = true;
+
+                                mAdapter.movies.clear();
+                                mAdapter.notifyDataSetChanged();
+
+                                // possible bug, might be handled differently: possibly by filtering with rxjava
+                                scrollCounter = 1;
+                                loadMovies(scrollCounter, tempSearchTerm);
+                            } else {
+                                searchMode = false;
+                                // bug: loads new list of images, even scrollCounter stays the same
+
+
+                                mAdapter.movies.clear();
+                                scrollCounter=1;
+                                mAdapter.notifyDataSetChanged();
+                                loadMovies(scrollCounter);
+                            }
+                        }else{
+                            // if adapters movies null: get 10 popular items
+                            loadMovies(scrollCounter);
                         }
                     }
                 });
 
 
-        loadMovies(scrollCounter);
     }
 
 
     private void loadMovies(int position, String searchTerm) {
 
         movies = new ArrayList<>();
-        api.getSearchedMovies(IMAGES, searchTerm, position, LIMIT).debounce(100, TimeUnit.MILLISECONDS).observeOn(AndroidSchedulers.mainThread()).subscribe(new Action1<List<SearchResult>>() {
+        api.searchForMovies(IMAGES, searchTerm, position, LIMIT).debounce(200, TimeUnit.MILLISECONDS).observeOn(AndroidSchedulers.mainThread()).subscribe(new Action1<List<SearchResult>>() {
             @Override
             public void call(List<SearchResult> results) {
-                if (mListview.getAdapter() == null) {
-                    mListview.setAdapter(mAdapter);
-                }
+
                 for (int i = 0; i < results.size(); i++) {
                     movies.add(results.get(i).getMovie());
                 }
-                mAdapter.setMovies(movies);
-                mAdapter.notifyDataSetChanged();
+
+
+                mAdapter.movies.addAll(movies);
+
+                mAdapter.notifyItemRangeChanged(mAdapter.movies.size() - movies.size(), movies.size());
             }
+
         });
 
 
@@ -164,17 +176,22 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadMovies(int position) {
 
-        api.get10PopularMovies(IMAGES, position, LIMIT).observeOn(AndroidSchedulers.mainThread()).subscribe(new Action1<List<Movie>>() {
+        movies = new ArrayList<>();
+
+        api.getPopularMovies(IMAGES, position, LIMIT).observeOn(AndroidSchedulers.mainThread()).subscribe(new Action1<List<Movie>>() {
             @Override
-            public void call(List<Movie> movies) {
-                if (mListview.getAdapter() == null) {
-                    mListview.setAdapter(mAdapter);
-                }
-                mAdapter.getMovies().addAll(movies);
+            public void call(List<Movie> list) {
+                movies = list;
+                // workaround for initial start
+                if (mAdapter.movies == null || mAdapter.movies.size() == 0) {
+                    mAdapter.movies = movies;
+                    mAdapter.notifyDataSetChanged();
+                } else
+                    mAdapter.movies.addAll(movies);
                 mAdapter.notifyDataSetChanged();
+
             }
         });
-
 
     }
 
@@ -190,12 +207,12 @@ public class MainActivity extends AppCompatActivity {
 
         @Headers({"Content-Type: application/json", "trakt-api-key: ad005b8c117cdeee58a1bdb7089ea31386cd489b21e14b19818c91511f12a086", "trakt-api-version: 2"})
         @GET("movies/popular")
-        Observable<List<Movie>> get10PopularMovies(@Query("extended") String extendedValues, @Query("page") int page, @Query("limit") int limit);
+        Observable<List<Movie>> getPopularMovies(@Query("extended") String extendedValues, @Query("page") int page, @Query("limit") int limit);
 
 
         @Headers({"Content-Type: application/json", "trakt-api-key: ad005b8c117cdeee58a1bdb7089ea31386cd489b21e14b19818c91511f12a086", "trakt-api-version: 2"})
         @GET("search/movie")
-        Observable<List<SearchResult>> getSearchedMovies(@Query("extended") String extendedValues, @Query("query") String query, @Query("page") int page, @Query("limit") int limit);
+        Observable<List<SearchResult>> searchForMovies(@Query("extended") String extendedValues, @Query("query") String query, @Query("page") int page, @Query("limit") int limit);
 
 
     }
