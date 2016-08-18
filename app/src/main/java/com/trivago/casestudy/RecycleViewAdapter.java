@@ -15,6 +15,10 @@ import java.util.List;
 
 /**
  * Created by Matthias on 18.08.16 at 15:00.
+ * Simple RecycleViewAdapter that loads items into RecyclerView by making use of
+ * ViewHolder Concept
+ * Image and Memory Recource Handling is done by Picasso
+ *
  */
 public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.MovieViewHolder> {
 

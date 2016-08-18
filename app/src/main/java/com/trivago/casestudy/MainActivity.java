@@ -1,14 +1,21 @@
 package com.trivago.casestudy;
 
 import android.os.Bundle;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
+import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
 import android.widget.EditText;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.jakewharton.rxbinding.widget.RxTextView;
+import com.jakewharton.rxbinding.support.v7.widget.RxSearchView;
+import com.jakewharton.rxbinding.support.v7.widget.SearchViewQueryTextEvent;
 import com.trivago.casestudy.models.Movie;
 import com.trivago.casestudy.models.SearchResult;
 
@@ -40,25 +47,26 @@ public class MainActivity extends AppCompatActivity {
 
     // ui stufff
     private RecycleViewAdapter mAdapter;
+    private Toolbar mToolbar;
+    private SearchView search;
 
 
     // behaviour and helper fields
     private int scrollCounter = 1;
     private boolean searchMode;
-    private boolean searchedBefore;
     private String tempSearchTerm;
 
 
     // other
-    private Subscription editTextSub;
+    private Subscription searchSubscription;
     private List<Movie> movies;
 
 
-    RxJavaCallAdapterFactory rxAdapter = RxJavaCallAdapterFactory.createWithScheduler(Schedulers.io());
-
+    // GSON RXJava & Retrofit 2
     Gson gson = new GsonBuilder()
             .setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
             .create();
+    RxJavaCallAdapterFactory rxAdapter = RxJavaCallAdapterFactory.createWithScheduler(Schedulers.io());
 
     Retrofit retrofit = new Retrofit.Builder()
             .baseUrl(BASE_URL)
@@ -74,6 +82,15 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         final EditText editText = (EditText) findViewById(R.id.editText);
+
+
+        // debug
+        editText.setVisibility(View.GONE);
+
+        mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(mToolbar);
+
+
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
 
 
@@ -102,52 +119,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-        // handle editText changes
-
-
-//        filter(new Func1<CharSequence, Boolean>() {
-//                   @Override
-//                   public Boolean call(CharSequence charSequence) {
-//                       return charSequence.length()>2;
-//                   }
-//               }
-
-        editTextSub = RxTextView.textChanges(editText).debounce(100, TimeUnit.MILLISECONDS)
-                .observeOn(AndroidSchedulers.mainThread()).subscribe(new Action1<CharSequence>() {
-
-                    @Override
-                    public void call(CharSequence value) {
-
-                        if (mAdapter.movies != null) {
-                            tempSearchTerm = value.toString();
-                            if (tempSearchTerm.length() > 2) {
-
-                                searchMode = true;
-
-                                mAdapter.movies.clear();
-                                mAdapter.notifyDataSetChanged();
-
-                                // possible bug, might be handled differently: possibly by filtering with rxjava
-                                scrollCounter = 1;
-                                loadMovies(scrollCounter, tempSearchTerm);
-                            } else {
-                                searchMode = false;
-                                // bug: loads new list of images, even scrollCounter stays the same
-
-
-                                mAdapter.movies.clear();
-                                scrollCounter=1;
-                                mAdapter.notifyDataSetChanged();
-                                loadMovies(scrollCounter);
-                            }
-                        }else{
-                            // if adapters movies null: get 10 popular items
-                            loadMovies(scrollCounter);
-                        }
-                    }
-                });
-
-
     }
 
 
@@ -161,10 +132,7 @@ public class MainActivity extends AppCompatActivity {
                 for (int i = 0; i < results.size(); i++) {
                     movies.add(results.get(i).getMovie());
                 }
-
-
                 mAdapter.movies.addAll(movies);
-
                 mAdapter.notifyItemRangeChanged(mAdapter.movies.size() - movies.size(), movies.size());
             }
 
@@ -188,17 +156,57 @@ public class MainActivity extends AppCompatActivity {
                     mAdapter.notifyDataSetChanged();
                 } else
                     mAdapter.movies.addAll(movies);
-                mAdapter.notifyDataSetChanged();
+                mAdapter.notifyItemRangeChanged(mAdapter.movies.size() - movies.size(), movies.size());
 
             }
         });
 
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        mToolbar.inflateMenu(R.menu.menu);
+        MenuItem searchViewItem = menu.findItem(R.id.menu_search_item);
+        search = (SearchView) MenuItemCompat.getActionView(searchViewItem);
+
+
+        searchSubscription = RxSearchView.queryTextChangeEvents(search).debounce(100, TimeUnit.MILLISECONDS).observeOn(AndroidSchedulers.mainThread()).subscribe(new Action1<SearchViewQueryTextEvent>() {
+            @Override
+            public void call(SearchViewQueryTextEvent searchViewQueryTextEvent) {
+                tempSearchTerm = searchViewQueryTextEvent.queryText().toString();
+
+
+                if (mAdapter.movies != null) {
+                    if (tempSearchTerm.length() > 2) {
+
+                        searchMode = true;
+                        scrollCounter = 1;
+
+                        mAdapter.movies.clear();
+                        mAdapter.notifyDataSetChanged();
+
+                        loadMovies(scrollCounter, tempSearchTerm);
+                    } else {
+                        searchMode = false;
+                        scrollCounter = 1;
+
+                        mAdapter.movies.clear();
+                        mAdapter.notifyDataSetChanged();
+
+                        loadMovies(scrollCounter);
+                    }
+                } else {
+                    // if adapters movies null: get popular movies
+                    loadMovies(scrollCounter);
+                }
+            }
+        });
+        return super.onCreateOptionsMenu(menu);
+    }
 
     @Override
     protected void onDestroy() {
-        editTextSub.unsubscribe();
+        searchSubscription.unsubscribe();
         super.onDestroy();
     }
 
