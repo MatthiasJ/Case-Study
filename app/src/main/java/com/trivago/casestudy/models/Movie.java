@@ -17,81 +17,79 @@ public class Movie {
     private String title;
     @SerializedName("year")
     @Expose
-    private int year;
+    private String year;
     @SerializedName("ids")
     @Expose
     private Ids ids;
     @SerializedName("images")
     @Expose
     private Images images;
+    @SerializedName("overview")
+    @Expose
+    private String overview;
 
     /**
-     *
-     * @return
-     * The title
+     * @return The Overview
+     */
+    public String getOverview() {
+        return overview;
+    }
+
+    public void setOverview(String overview) {
+        this.overview = overview;
+    }
+
+    /**
+     * @return The title
      */
     public String getTitle() {
         return title;
     }
 
     /**
-     *
-     * @param title
-     * The title
+     * @param title The title
      */
     public void setTitle(String title) {
         this.title = title;
     }
 
     /**
-     *
-     * @return
-     * The year
+     * @return The year
      */
-    public int getYear() {
+    public String getYear() {
         return year;
     }
 
     /**
-     *
-     * @param year
-     * The year
+     * @param year The year
      */
-    public void setYear(int year) {
+    public void setYear(String year) {
         this.year = year;
     }
 
     /**
-     *
-     * @return
-     * The ids
+     * @return The ids
      */
     public Ids getIds() {
         return ids;
     }
 
     /**
-     *
-     * @param ids
-     * The ids
+     * @param ids The ids
      */
     public void setIds(Ids ids) {
         this.ids = ids;
     }
 
     /**
-     *
-     * @return
-     * The images
+     * @return The images
      */
     public Images getImages() {
         return images;
     }
 
     /**
-     *
-     * @param images
-     * The images
+     * @param images The images
      */
     public void setImages(Images images) {
         this.images = images;
