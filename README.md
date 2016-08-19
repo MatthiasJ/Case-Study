@@ -13,6 +13,6 @@ Phone:
 
 Tablet:
 
-<img src="/Screenshots/device-2016-08-19-220030.png" width="250" alt="">
-<img src="/Screenshots/device-2016-08-19-220114.png" width="250" alt="">
+<img src="/Screenshots/device-2016-08-19-220030.png" width="500" alt="">
+<img src="/Screenshots/device-2016-08-19-220114.png" width="500" alt="">
 
