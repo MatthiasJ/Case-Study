@@ -36,6 +36,9 @@ dependencies {
     compile 'com.github.florent37:picassopalette:2.0.0'
     compile 'jp.wasabeef:picasso-transformations:2.1.0'
 
+    //text justify
+    compile 'com.uncopt:android.justified:1.0'
+
     //retrofit
     compile 'com.google.code.gson:gson:2.7'
     compile 'com.squareup.retrofit2:retrofit:2.1.0'

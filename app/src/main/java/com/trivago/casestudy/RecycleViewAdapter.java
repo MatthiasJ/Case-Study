@@ -56,8 +56,8 @@ public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.
 
 
         String imageResource1 = movies.get(position).getImages().getFanart().getThumb();
-        String imageResource2 = movies.get(position).getImages().getLogo().getFull();
-        String imageResource3 = movies.get(position).getImages().getThumb().getFull();
+//        String imageResource2 = movies.get(position).getImages().getLogo().getFull();
+//        String imageResource3 = movies.get(position).getImages().getThumb().getFull();
 
 
 

@@ -47,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
 
     // api related fields
     public static final String BASE_URL = "https://api.trakt.tv/";
-    public static final String TRAKT_API_KEY = "";
+    public static final String TRAKT_API_KEY = "ad005b8c117cdeee58a1bdb7089ea31386cd489b21e14b19818c91511f12a086";
     public static final int LIMIT = 10;
     public static final String IMAGES = "full,images";
 
