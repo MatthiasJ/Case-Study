@@ -9,8 +9,6 @@ import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.EditText;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -81,11 +79,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        final EditText editText = (EditText) findViewById(R.id.editText);
-
-
-        // debug
-        editText.setVisibility(View.GONE);
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
@@ -140,6 +133,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
+
 
 
     private void loadMovies(int position) {
@@ -208,6 +202,14 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         searchSubscription.unsubscribe();
         super.onDestroy();
+    }
+
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+//        outState.putParcelableArrayList(mAdapter.movies);
+//        outState.putInt("AdapterPosution",layout);
     }
 
     public interface TrakTvEndpointInterface {

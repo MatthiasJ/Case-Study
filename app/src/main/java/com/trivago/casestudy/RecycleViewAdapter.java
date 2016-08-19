@@ -80,6 +80,8 @@ public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.
 
 
 
+
+
     class MovieViewHolder extends RecyclerView.ViewHolder {
 
         public ImageView image;
