@@ -42,7 +42,7 @@ public class MainActivity extends AppCompatActivity {
     // api related fields
     public static final String BASE_URL = "https://api.trakt.tv/";
     public static final int LIMIT = 10;
-    public static final String IMAGES = "images";
+    public static final String IMAGES = "full,images";
 
 
     // ui stufff
