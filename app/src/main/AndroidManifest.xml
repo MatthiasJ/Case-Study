@@ -8,7 +8,7 @@
         android:label="VerTrakt"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity" android:windowSoftInputMode="adjustPan|stateHidden">
+        <activity android:name=".MainActivity" android:windowSoftInputMode="adjustPan|stateHidden" android:configChanges="orientation|keyboardHidden">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -53,7 +53,16 @@ public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.
         holder.overview.setText(movies.get(position).getOverview());
         holder.year.setText(movies.get(position).getYear());
 
-        Picasso.with(context).load(movies.get(position).getImages().getFanart().getThumb()).transform(transformation).placeholder(R.drawable.placeholder).into(holder.image, PicassoPalette.with(movies.get(position).getImages().getFanart().getThumb(),holder.image).intoCallBack(new PicassoPalette.CallBack() {
+
+
+        String imageResource1 = movies.get(position).getImages().getFanart().getThumb();
+        String imageResource2 = movies.get(position).getImages().getLogo().getFull();
+        String imageResource3 = movies.get(position).getImages().getThumb().getFull();
+
+
+
+
+        Picasso.with(context).load(imageResource1).transform(transformation).placeholder(R.drawable.placeholder).into(holder.image, PicassoPalette.with(movies.get(position).getImages().getFanart().getThumb(),holder.image).intoCallBack(new PicassoPalette.CallBack() {
             @Override
             public void onPaletteLoaded(Palette palette) {
              int tempColor= palette.getDarkVibrantColor(Color.BLACK);
@@ -62,9 +71,6 @@ public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.
             }
         }));
 
-//
-//
-// Picasso.with(context).load(movies.get(position).getImages().getFanart().getThumb()).transform(transformation).placeholder(R.drawable.placeholder).into(holder.image, PicassoPalette.with(movies.get(position).getImages().getFanart().getThumb(),holder.image).use(PicassoPalette.Profile.VIBRANT_DARK).intoBackground(holder.cardView).intoBackground(holder.overview));
 
 
     }

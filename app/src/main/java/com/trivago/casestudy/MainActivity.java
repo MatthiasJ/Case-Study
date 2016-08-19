@@ -3,6 +3,7 @@ package com.trivago.casestudy;
 import android.app.Activity;
 import android.content.res.Configuration;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -41,8 +42,12 @@ import rx.schedulers.Schedulers;
 public class MainActivity extends AppCompatActivity {
 
 
+    // Retain Activity State
+    private Parcelable state;
+
     // api related fields
     public static final String BASE_URL = "https://api.trakt.tv/";
+    public static final String TRAKT_API_KEY = "";
     public static final int LIMIT = 10;
     public static final String IMAGES = "full,images";
 
@@ -197,8 +202,6 @@ public class MainActivity extends AppCompatActivity {
         mToolbar.inflateMenu(R.menu.menu);
         MenuItem searchViewItem = menu.findItem(R.id.menu_search_item);
         search = (SearchView) MenuItemCompat.getActionView(searchViewItem);
-//
-
         searchSubscription = RxSearchView.queryTextChangeEvents(search).debounce(100, TimeUnit.MILLISECONDS).observeOn(AndroidSchedulers.mainThread()).subscribe(new Action1<SearchViewQueryTextEvent>() {
             @Override
             public void call(SearchViewQueryTextEvent searchViewQueryTextEvent) {
@@ -226,6 +229,8 @@ public class MainActivity extends AppCompatActivity {
                     // if adapters movies null: get popular movies
                     loadMovies(scrollCounter);
                 }
+
+                // hide softkeyboard
                     if(searchViewQueryTextEvent.isSubmitted()){
                         InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
                         inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
@@ -250,19 +255,20 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-//        outState.putParcelableArrayList(mAdapter.movies);
-//        outState.putInt("AdapterPosution",layout);
+//        state = lay.onSaveInstanceState();
+//        state.putParcelable(LIST_STATE_KEY, mListState);
+
     }
 
     public interface TrakTvEndpointInterface {
 
 
-        @Headers({"Content-Type: application/json", "trakt-api-key: ad005b8c117cdeee58a1bdb7089ea31386cd489b21e14b19818c91511f12a086", "trakt-api-version: 2"})
+        @Headers({"Content-Type: application/json", "trakt-api-key: "+TRAKT_API_KEY, "trakt-api-version: 2"})
         @GET("movies/popular")
         Observable<List<Movie>> getPopularMovies(@Query("extended") String extendedValues, @Query("page") int page, @Query("limit") int limit);
 
 
-        @Headers({"Content-Type: application/json", "trakt-api-key: ad005b8c117cdeee58a1bdb7089ea31386cd489b21e14b19818c91511f12a086", "trakt-api-version: 2"})
+        @Headers({"Content-Type: application/json", "trakt-api-key: "+TRAKT_API_KEY, "trakt-api-version: 2"})
         @GET("search/movie")
         Observable<List<SearchResult>> searchForMovies(@Query("extended") String extendedValues, @Query("query") String query, @Query("page") int page, @Query("limit") int limit);
 
