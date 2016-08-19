@@ -6,6 +6,11 @@
         android:icon="@android:drawable/ic_menu_search"
         android:title="Search Movies"
         app:actionViewClass="android.support.v7.widget.SearchView"
-        app:showAsAction="always|collapseActionView" />
+        app:showAsAction="always"
+
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+
+        />
         <!--app:showAsAction="ifRoom|collapseActionView"-->
 </menu>

@@ -1,14 +1,18 @@
 package com.trivago.casestudy;
 
+import android.app.Activity;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
+import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.inputmethod.InputMethodManager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -84,32 +88,64 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(mToolbar);
 
 
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
 
 
-        RecyclerView mListview = (RecyclerView) findViewById(R.id.recyclerView);
+        // duplicate code: TODO refactor
+        if (isTablet()) {
 
-        mAdapter = new RecycleViewAdapter(this);
-        mListview.setLayoutManager(layoutManager);
-        mListview.setAdapter(mAdapter);
+            StaggeredGridLayoutManager layoutManager = new StaggeredGridLayoutManager(3, 1);
+            RecyclerView mListview = (RecyclerView) findViewById(R.id.recyclerView);
+
+            mAdapter = new RecycleViewAdapter(this);
+            mListview.setLayoutManager(layoutManager);
+            mListview.setAdapter(mAdapter);
 
 
-        mListview.addOnScrollListener(new EndlessRecyclerViewScrollListener(layoutManager) {
-            @Override
-            public void onLoadMore(int page, int totalItemsCount) {
+            mListview.addOnScrollListener(new EndlessRecyclerViewScrollListener(layoutManager) {
+                @Override
+                public void onLoadMore(int page, int totalItemsCount) {
 
 
-                if (mAdapter != null) {
-                    scrollCounter++;
+                    if (mAdapter != null) {
+                        scrollCounter++;
 
-                    if (searchMode) {
-                        loadMovies(scrollCounter, tempSearchTerm);
-                    } else {
-                        loadMovies(scrollCounter);
+                        if (searchMode) {
+                            loadMovies(scrollCounter, tempSearchTerm);
+                        } else {
+                            loadMovies(scrollCounter);
+                        }
                     }
                 }
-            }
-        });
+            });
+        } else {
+
+            // duplicate code: TODO refactor
+            LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+            RecyclerView mListview = (RecyclerView) findViewById(R.id.recyclerView);
+
+            mAdapter = new RecycleViewAdapter(this);
+            mListview.setLayoutManager(layoutManager);
+            mListview.setAdapter(mAdapter);
+
+
+            mListview.addOnScrollListener(new EndlessRecyclerViewScrollListener(layoutManager) {
+                @Override
+                public void onLoadMore(int page, int totalItemsCount) {
+
+
+                    if (mAdapter != null) {
+                        scrollCounter++;
+
+                        if (searchMode) {
+                            loadMovies(scrollCounter, tempSearchTerm);
+                        } else {
+                            loadMovies(scrollCounter);
+                        }
+                    }
+                }
+            });
+
+        }
 
 
     }
@@ -133,7 +169,6 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
-
 
 
     private void loadMovies(int position) {
@@ -162,14 +197,12 @@ public class MainActivity extends AppCompatActivity {
         mToolbar.inflateMenu(R.menu.menu);
         MenuItem searchViewItem = menu.findItem(R.id.menu_search_item);
         search = (SearchView) MenuItemCompat.getActionView(searchViewItem);
-
+//
 
         searchSubscription = RxSearchView.queryTextChangeEvents(search).debounce(100, TimeUnit.MILLISECONDS).observeOn(AndroidSchedulers.mainThread()).subscribe(new Action1<SearchViewQueryTextEvent>() {
             @Override
             public void call(SearchViewQueryTextEvent searchViewQueryTextEvent) {
                 tempSearchTerm = searchViewQueryTextEvent.queryText().toString();
-
-
                 if (mAdapter.movies != null) {
                     if (tempSearchTerm.length() > 2) {
 
@@ -193,8 +226,17 @@ public class MainActivity extends AppCompatActivity {
                     // if adapters movies null: get popular movies
                     loadMovies(scrollCounter);
                 }
+                    if(searchViewQueryTextEvent.isSubmitted()){
+                        InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+                        inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+                        search.clearFocus();
+                    }
+
             }
         });
+
+
+
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -225,5 +267,9 @@ public class MainActivity extends AppCompatActivity {
         Observable<List<SearchResult>> searchForMovies(@Query("extended") String extendedValues, @Query("query") String query, @Query("page") int page, @Query("limit") int limit);
 
 
+    }
+
+    public boolean isTablet() {
+        return (getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE;
     }
 }
