@@ -36,5 +36,5 @@ Http-Client & JSON Deserialization
 
 Rxjava
 
-[RxJava](https://github.com/ReactiveX/RxJava) [links](https://github.com/ReactiveX/RxAndroid)
+[RxJava](https://github.com/ReactiveX/RxJava) [RxAndroid](https://github.com/ReactiveX/RxAndroid)
 [RxBinding](https://github.com/JakeWharton/RxBinding)
