@@ -21,16 +21,16 @@
 
 image & caching
 
-[link](https://square.github.io/picasso/)
-[link](https://github.com/florent37/PicassoPalette)
-[link](https://github.com/wasabeef/picasso-transformations)
+[Picasso](https://square.github.io/picasso/)
+[Picasso Palette](https://github.com/florent37/PicassoPalette)
+[Picasso Transformations](https://github.com/wasabeef/picasso-transformations)
 
 http client & JSON deserialization
-[link](https://github.com/google/gson)
-[link](https://github.com/square/retrofit)
-[link](https://github.com/square/retrofit/tree/master/retrofit-converters)
+[Gson](https://github.com/google/gson)
+[Retrofit](https://github.com/square/retrofit)
+[Retrofit Converter](https://github.com/square/retrofit/tree/master/retrofit-converters)
 
 
 rxjava
-[link](https://github.com/ReactiveX/RxJava) [links](https://github.com/ReactiveX/RxAndroid)
-[link](https://github.com/JakeWharton/RxBinding)
+[RxJava](https://github.com/ReactiveX/RxJava) [links](https://github.com/ReactiveX/RxAndroid)
+[RxBinding](https://github.com/JakeWharton/RxBinding)
