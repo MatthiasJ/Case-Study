@@ -1,4 +1,4 @@
-# Case-Study
+# VerTrakt
 
 ## Simple App for testing Trak.TV Api
 
