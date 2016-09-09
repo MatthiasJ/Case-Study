@@ -11,6 +11,7 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.inputmethod.InputMethodManager;
@@ -39,243 +40,227 @@ import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
 
+
 public class MainActivity extends AppCompatActivity {
 
-
-    // Retain Activity State
-    private Parcelable state;
-
-    // api related fields
-    public static final String BASE_URL = "https://api.trakt.tv/";
-    public static final String TRAKT_API_KEY = "ad005b8c117cdeee58a1bdb7089ea31386cd489b21e14b19818c91511f12a086";
-    public static final int LIMIT = 10;
-    public static final String IMAGES = "full,images";
-
-
-    // ui stufff
-    private RecycleViewAdapter mAdapter;
-    private Toolbar mToolbar;
-    private SearchView search;
-
-
-    // behaviour and helper fields
-    private int scrollCounter = 1;
-    private boolean searchMode;
-    private String tempSearchTerm;
-
-
-    // other
-    private Subscription searchSubscription;
-    private List<Movie> movies;
+	// api related fields
+	public static final String BASE_URL = "https://api.trakt.tv/";
+	public static final String TRAKT_API_KEY = "ad005b8c117cdeee58a1bdb7089ea31386cd489b21e14b19818c91511f12a086";
+	public static final int LIMIT = 10;
+	public static final String IMAGES = "full,images";
+	// GSON RXJava & Retrofit 2
+	Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").create();
+	RxJavaCallAdapterFactory rxAdapter = RxJavaCallAdapterFactory.createWithScheduler(Schedulers.io());
+	Retrofit retrofit = new Retrofit.Builder().baseUrl(BASE_URL).addConverterFactory(GsonConverterFactory.create(gson)).addCallAdapterFactory(rxAdapter).build();
+	TrakTvEndpointInterface api = retrofit.create(TrakTvEndpointInterface.class);
+	// Retain Activity State
+	private Parcelable state;
+	// ui stufff
+	private RecycleViewAdapter mAdapter;
+	private Toolbar mToolbar;
+	private SearchView search;
+	// behaviour and helper fields
+	private int scrollCounter = 1;
+	private boolean searchMode;
+	private String tempSearchTerm;
+	// other
+	private Subscription searchSubscription;
+	private List<Movie> movies;
 
 
-    // GSON RXJava & Retrofit 2
-    Gson gson = new GsonBuilder()
-            .setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
-            .create();
-    RxJavaCallAdapterFactory rxAdapter = RxJavaCallAdapterFactory.createWithScheduler(Schedulers.io());
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_main);
 
-    Retrofit retrofit = new Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create(gson))
-            .addCallAdapterFactory(rxAdapter)
-            .build();
+		mToolbar = (Toolbar) findViewById(R.id.toolbar);
+		setSupportActionBar(mToolbar);
 
-    TrakTvEndpointInterface api = retrofit.create(TrakTvEndpointInterface.class);
+		// duplicate code: TODO refactor
+		if (isTablet()) {
 
+			StaggeredGridLayoutManager layoutManager = new StaggeredGridLayoutManager(3, 1);
+			RecyclerView mListview = (RecyclerView) findViewById(R.id.recyclerView);
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+			mAdapter = new RecycleViewAdapter(this);
+			mListview.setLayoutManager(layoutManager);
+			mListview.setAdapter(mAdapter);
 
-        mToolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(mToolbar);
+			mListview.addOnScrollListener(new EndlessRecyclerViewScrollListener(layoutManager) {
 
+				@Override
+				public void onLoadMore(int page, int totalItemsCount) {
 
+					if (mAdapter != null) {
+						scrollCounter++;
 
+						if (searchMode) {
+							loadMovies(scrollCounter, tempSearchTerm);
+						} else {
+							loadMovies(scrollCounter);
+						}
+					}
+				}
+			});
+		} else {
 
-        // duplicate code: TODO refactor
-        if (isTablet()) {
+			// duplicate code: TODO refactor
+			LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+			RecyclerView mListview = (RecyclerView) findViewById(R.id.recyclerView);
 
-            StaggeredGridLayoutManager layoutManager = new StaggeredGridLayoutManager(3, 1);
-            RecyclerView mListview = (RecyclerView) findViewById(R.id.recyclerView);
+			mAdapter = new RecycleViewAdapter(this);
+			mListview.setLayoutManager(layoutManager);
+			mListview.setAdapter(mAdapter);
 
-            mAdapter = new RecycleViewAdapter(this);
-            mListview.setLayoutManager(layoutManager);
-            mListview.setAdapter(mAdapter);
+			mListview.addOnScrollListener(new EndlessRecyclerViewScrollListener(layoutManager) {
 
+				@Override
+				public void onLoadMore(int page, int totalItemsCount) {
 
-            mListview.addOnScrollListener(new EndlessRecyclerViewScrollListener(layoutManager) {
-                @Override
-                public void onLoadMore(int page, int totalItemsCount) {
+					if (mAdapter != null) {
+						scrollCounter++;
 
-
-                    if (mAdapter != null) {
-                        scrollCounter++;
-
-                        if (searchMode) {
-                            loadMovies(scrollCounter, tempSearchTerm);
-                        } else {
-                            loadMovies(scrollCounter);
-                        }
-                    }
-                }
-            });
-        } else {
-
-            // duplicate code: TODO refactor
-            LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-            RecyclerView mListview = (RecyclerView) findViewById(R.id.recyclerView);
-
-            mAdapter = new RecycleViewAdapter(this);
-            mListview.setLayoutManager(layoutManager);
-            mListview.setAdapter(mAdapter);
-
-
-            mListview.addOnScrollListener(new EndlessRecyclerViewScrollListener(layoutManager) {
-                @Override
-                public void onLoadMore(int page, int totalItemsCount) {
+						if (searchMode) {
+							loadMovies(scrollCounter, tempSearchTerm);
+						} else {
+							loadMovies(scrollCounter);
+						}
+					}
+				}
+			});
+		}
+	}
 
 
-                    if (mAdapter != null) {
-                        scrollCounter++;
+	// load popular movies with search
+	private void loadMovies(int position, String searchTerm) {
 
-                        if (searchMode) {
-                            loadMovies(scrollCounter, tempSearchTerm);
-                        } else {
-                            loadMovies(scrollCounter);
-                        }
-                    }
-                }
-            });
+		movies = new ArrayList<>();
+		api.searchForMovies(IMAGES, searchTerm, position, LIMIT).debounce(200, TimeUnit.MILLISECONDS).observeOn(AndroidSchedulers.mainThread()).doOnError(new Action1<Throwable>() {
 
-        }
+			@Override
+			public void call(Throwable throwable) {
+				Log.d("Search_Movies_Error:", throwable.getMessage());
+			}
+		}).subscribe(new Action1<List<SearchResult>>() {
 
+			@Override
+			public void call(List<SearchResult> results) {
 
-    }
-
-
-    private void loadMovies(int position, String searchTerm) {
-
-        movies = new ArrayList<>();
-        api.searchForMovies(IMAGES, searchTerm, position, LIMIT).debounce(200, TimeUnit.MILLISECONDS).observeOn(AndroidSchedulers.mainThread()).subscribe(new Action1<List<SearchResult>>() {
-            @Override
-            public void call(List<SearchResult> results) {
-
-                for (int i = 0; i < results.size(); i++) {
-                    movies.add(results.get(i).getMovie());
-                }
-                mAdapter.movies.addAll(movies);
-                mAdapter.notifyItemRangeChanged(mAdapter.movies.size() - movies.size(), movies.size());
-            }
-
-        });
+				for (int i = 0; i < results.size(); i++) {
+					movies.add(results.get(i).getMovie());
+				}
+				mAdapter.movies.addAll(movies);
+				mAdapter.notifyItemRangeChanged(mAdapter.movies.size() - movies.size(), movies.size());
+			}
+		});
+	}
 
 
-    }
+	// load popular movies without search
+	private void loadMovies(int position) {
+
+		movies = new ArrayList<>();
+
+		api.getPopularMovies(IMAGES, position, LIMIT).observeOn(AndroidSchedulers.mainThread())
+				.doOnError(new Action1<Throwable>() {
+
+			@Override
+			public void call(Throwable throwable) {
+				Log.d("Load_Movies_Error:", throwable.getMessage());
+			}
+		}).subscribe(new Action1<List<Movie>>() {
+
+			@Override
+			public void call(List<Movie> list) {
+				movies = list;
+				// workaround for initial start
+				if (mAdapter.movies == null || mAdapter.movies.size() == 0) {
+					mAdapter.movies = movies;
+					mAdapter.notifyDataSetChanged();
+				} else mAdapter.movies.addAll(movies);
+				mAdapter.notifyItemRangeChanged(mAdapter.movies.size() - movies.size(), movies.size());
+			}
+		});
+	}
 
 
-    private void loadMovies(int position) {
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		mToolbar.inflateMenu(R.menu.menu);
+		MenuItem searchViewItem = menu.findItem(R.id.menu_search_item);
+		search = (SearchView) MenuItemCompat.getActionView(searchViewItem);
+		searchSubscription = RxSearchView.queryTextChangeEvents(search).debounce(100, TimeUnit.MILLISECONDS).observeOn(AndroidSchedulers.mainThread()).subscribe(new Action1<SearchViewQueryTextEvent>() {
 
-        movies = new ArrayList<>();
+			@Override
+			public void call(SearchViewQueryTextEvent searchViewQueryTextEvent) {
+				tempSearchTerm = searchViewQueryTextEvent.queryText().toString();
+				if (mAdapter.movies != null) {
+					if (tempSearchTerm.length() > 2) {
 
-        api.getPopularMovies(IMAGES, position, LIMIT).observeOn(AndroidSchedulers.mainThread()).subscribe(new Action1<List<Movie>>() {
-            @Override
-            public void call(List<Movie> list) {
-                movies = list;
-                // workaround for initial start
-                if (mAdapter.movies == null || mAdapter.movies.size() == 0) {
-                    mAdapter.movies = movies;
-                    mAdapter.notifyDataSetChanged();
-                } else
-                    mAdapter.movies.addAll(movies);
-                mAdapter.notifyItemRangeChanged(mAdapter.movies.size() - movies.size(), movies.size());
+						searchMode = true;
+						scrollCounter = 1;
 
-            }
-        });
+						mAdapter.movies.clear();
+						mAdapter.notifyDataSetChanged();
 
-    }
+						loadMovies(scrollCounter, tempSearchTerm);
+					} else {
+						searchMode = false;
+						scrollCounter = 1;
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        mToolbar.inflateMenu(R.menu.menu);
-        MenuItem searchViewItem = menu.findItem(R.id.menu_search_item);
-        search = (SearchView) MenuItemCompat.getActionView(searchViewItem);
-        searchSubscription = RxSearchView.queryTextChangeEvents(search).debounce(100, TimeUnit.MILLISECONDS).observeOn(AndroidSchedulers.mainThread()).subscribe(new Action1<SearchViewQueryTextEvent>() {
-            @Override
-            public void call(SearchViewQueryTextEvent searchViewQueryTextEvent) {
-                tempSearchTerm = searchViewQueryTextEvent.queryText().toString();
-                if (mAdapter.movies != null) {
-                    if (tempSearchTerm.length() > 2) {
+						mAdapter.movies.clear();
+						mAdapter.notifyDataSetChanged();
 
-                        searchMode = true;
-                        scrollCounter = 1;
+						loadMovies(scrollCounter);
+					}
+				} else {
+					// if adapters movies null: get popular movies
+					loadMovies(scrollCounter);
+				}
 
-                        mAdapter.movies.clear();
-                        mAdapter.notifyDataSetChanged();
+				// hide softkeyboard
+				if (searchViewQueryTextEvent.isSubmitted()) {
+					InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+					inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+					search.clearFocus();
+				}
+			}
+		});
 
-                        loadMovies(scrollCounter, tempSearchTerm);
-                    } else {
-                        searchMode = false;
-                        scrollCounter = 1;
-
-                        mAdapter.movies.clear();
-                        mAdapter.notifyDataSetChanged();
-
-                        loadMovies(scrollCounter);
-                    }
-                } else {
-                    // if adapters movies null: get popular movies
-                    loadMovies(scrollCounter);
-                }
-
-                // hide softkeyboard
-                    if(searchViewQueryTextEvent.isSubmitted()){
-                        InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
-                        inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
-                        search.clearFocus();
-                    }
-
-            }
-        });
+		return super.onCreateOptionsMenu(menu);
+	}
 
 
-
-        return super.onCreateOptionsMenu(menu);
-    }
-
-    @Override
-    protected void onDestroy() {
-        searchSubscription.unsubscribe();
-        super.onDestroy();
-    }
+	@Override
+	protected void onDestroy() {
+		searchSubscription.unsubscribe();
+		super.onDestroy();
+	}
 
 
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
+	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
 //        state = lay.onSaveInstanceState();
 //        state.putParcelable(LIST_STATE_KEY, mListState);
 
-    }
-
-    public interface TrakTvEndpointInterface {
+	}
 
 
-        @Headers({"Content-Type: application/json", "trakt-api-key: "+TRAKT_API_KEY, "trakt-api-version: 2"})
-        @GET("movies/popular")
-        Observable<List<Movie>> getPopularMovies(@Query("extended") String extendedValues, @Query("page") int page, @Query("limit") int limit);
+	public boolean isTablet() {
+		return (getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE;
+	}
 
 
-        @Headers({"Content-Type: application/json", "trakt-api-key: "+TRAKT_API_KEY, "trakt-api-version: 2"})
-        @GET("search/movie")
-        Observable<List<SearchResult>> searchForMovies(@Query("extended") String extendedValues, @Query("query") String query, @Query("page") int page, @Query("limit") int limit);
+	public interface TrakTvEndpointInterface {
 
+		@Headers({"Content-Type: application/json", "trakt-api-key: " + TRAKT_API_KEY, "trakt-api-version: 2"})
+		@GET("movies/popular")
+		Observable<List<Movie>> getPopularMovies(@Query("extended") String extendedValues, @Query("page") int page, @Query("limit") int limit);
 
-    }
-
-    public boolean isTablet() {
-        return (getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE;
-    }
+		@Headers({"Content-Type: application/json", "trakt-api-key: " + TRAKT_API_KEY, "trakt-api-version: 2"})
+		@GET("search/movie")
+		Observable<List<SearchResult>> searchForMovies(@Query("extended") String extendedValues, @Query("query") String query, @Query("page") int page, @Query("limit") int limit);
+	}
 }
