@@ -48,7 +48,7 @@ before_script:
   - android-wait-for-emulator
 
 script:
-   - ./gradlew build connectedCheck
+   - ./gradlew build connectedCheck --stacktrace
 
 notifications:
   slack: matthiasj:5FKYVqoPQTXsmslFiYtM0Y0M
