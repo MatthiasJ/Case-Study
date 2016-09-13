@@ -1,16 +1,15 @@
-package com.trivago.casestudy.models;
+package com.matthiasj.verTrakTV.models;
 
 /**
- * Created by Matthias on 16.08.16 at 13:00.
+ * Created by Matthias on 16.08.16 at 12:57.
  */
-
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 import javax.annotation.Generated;
 
 @Generated("org.jsonschema2pojo")
-public class Logo {
+public class Clearart {
 
     @SerializedName("full")
     @Expose

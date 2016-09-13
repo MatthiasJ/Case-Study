@@ -1,4 +1,4 @@
-package com.trivago.casestudy.models;
+package com.matthiasj.verTrakTV.models;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;

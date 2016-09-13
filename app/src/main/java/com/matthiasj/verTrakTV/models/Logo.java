@@ -1,7 +1,7 @@
-package com.trivago.casestudy.models;
+package com.matthiasj.verTrakTV.models;
 
 /**
- * Created by Matthias on 16.08.16 at 13:01.
+ * Created by Matthias on 16.08.16 at 13:00.
  */
 
 import com.google.gson.annotations.Expose;
@@ -10,7 +10,7 @@ import com.google.gson.annotations.SerializedName;
 import javax.annotation.Generated;
 
 @Generated("org.jsonschema2pojo")
-public class Thumb {
+public class Logo {
 
     @SerializedName("full")
     @Expose

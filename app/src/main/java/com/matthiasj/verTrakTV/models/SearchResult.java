@@ -1,4 +1,4 @@
-package com.trivago.casestudy.models;
+package com.matthiasj.verTrakTV.models;
 
 /**
  * Created by Matthias on 17.08.16 at 14:43.

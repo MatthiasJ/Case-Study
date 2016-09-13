@@ -1,4 +1,4 @@
-package com.trivago.casestudy;
+package com.matthiasj.verTrakTV;
 
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;

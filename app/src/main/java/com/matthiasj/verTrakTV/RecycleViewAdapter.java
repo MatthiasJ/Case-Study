@@ -1,4 +1,4 @@
-package com.trivago.casestudy;
+package com.matthiasj.verTrakTV;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -14,7 +14,7 @@ import android.widget.TextView;
 import com.github.florent37.picassopalette.PicassoPalette;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Transformation;
-import com.trivago.casestudy.models.Movie;
+import com.matthiasj.verTrakTV.models.Movie;
 
 import java.util.List;
 

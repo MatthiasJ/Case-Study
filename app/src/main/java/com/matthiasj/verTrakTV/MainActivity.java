@@ -1,4 +1,4 @@
-package com.trivago.casestudy;
+package com.matthiasj.verTrakTV;
 
 import android.app.Activity;
 import android.content.res.Configuration;
@@ -20,8 +20,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.jakewharton.rxbinding.support.v7.widget.RxSearchView;
 import com.jakewharton.rxbinding.support.v7.widget.SearchViewQueryTextEvent;
-import com.trivago.casestudy.models.Movie;
-import com.trivago.casestudy.models.SearchResult;
+import com.matthiasj.verTrakTV.models.Movie;
+import com.matthiasj.verTrakTV.models.SearchResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,14 +48,21 @@ public class MainActivity extends AppCompatActivity {
 	public static final String TRAKT_API_KEY = "ad005b8c117cdeee58a1bdb7089ea31386cd489b21e14b19818c91511f12a086";
 	public static final int LIMIT = 10;
 	public static final String IMAGES = "full,images";
+
+
+
 	// GSON RXJava & Retrofit 2
 	Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").create();
 	RxJavaCallAdapterFactory rxAdapter = RxJavaCallAdapterFactory.createWithScheduler(Schedulers.io());
 	Retrofit retrofit = new Retrofit.Builder().baseUrl(BASE_URL).addConverterFactory(GsonConverterFactory.create(gson)).addCallAdapterFactory(rxAdapter).build();
 	TrakTvEndpointInterface api = retrofit.create(TrakTvEndpointInterface.class);
+
+
+
+
 	// Retain Activity State
 	private Parcelable state;
-	// ui stufff
+	// ui stuff
 	private RecycleViewAdapter mAdapter;
 	private Toolbar mToolbar;
 	private SearchView search;
