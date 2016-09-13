@@ -1,9 +1,7 @@
-
-
 language: android
-jdk:
-  - oraclejdk8
-
+jdk: oraclejdk8
+# Use the Travis Container-Based Infrastructure
+sudo: false
 
 cache:
   directories:
@@ -12,7 +10,7 @@ cache:
 
 env:
   global:
-    - ANDROID_API_LEVEL=24
+    - ANDROID_API_LEVEL=23
     - EMULATOR_API_LEVEL=21
     - ANDROID_BUILD_TOOLS_VERSION=23.0.2
     - ANDROID_ABI=armeabi-v7a
@@ -20,7 +18,7 @@ env:
     - ADB_INSTALL_TIMEOUT=20 # minutes (2 minutes by default)
 
 android:
- components:
+  components:
     - tools # to get the new `repository-11.xml`
     - platform-tools
     - tools # to install Android SDK tools 25.1.x
@@ -31,7 +29,7 @@ android:
     - addon-google_apis-google-$ANDROID_API_LEVEL
     - addon-google_apis-google-$EMULATOR_API_LEVEL
     # Google Play Services
-    #- extra-google-google_play_services
+    - extra-google-google_play_services
     # Support library
     - extra-android-support
     # Latest artifacts in local repository
@@ -41,15 +39,11 @@ android:
     - sys-img-armeabi-v7a-google_apis-$ANDROID_API_LEVEL
     - sys-img-armeabi-v7a-google_apis-$EMULATOR_API_LEVEL
 
-    before_script:
+before_script:
   # Create and start emulator
   - echo no | android create avd --force -n test -t "android-"$EMULATOR_API_LEVEL --abi $ANDROID_ABI --tag $ANDROID_TAG
   - emulator -avd test -no-skin -no-audio -no-window &
   - android-wait-for-emulator
 
 script:
-   - ./gradlew build connectedCheck
-
-notifications:
-  slack: matthiasj:5FKYVqoPQTXsmslFiYtM0Y0M
-  email: never
+  - ./gradlew clean check connectedCheck -x library:signArchives -PdisablePreDex
